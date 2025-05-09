@@ -241,22 +241,41 @@
 		</script>
 		<script id="bg_fsh" type="x-shader/x_fragment">
 			#ifdef GL_ES
-			//precision mediump float;
 			precision highp float;
 			#endif
-
-			uniform vec2 uTimes;
-
+		
+			uniform vec2 uTimes; // 时间变量（通常是毫秒）
+		
 			varying vec2 texCoord;
 			varying vec2 screenCoord;
-
+		
+			// 颜色插值函数：基于时间生成平滑颜色过渡
+			vec3 colorPalette(float t) {
+				// 使用 sin/cos 创建平滑周期性颜色变化
+				float r = 0.5 + 0.5 * sin(t * 0.2 + 0.0);
+				float g = 0.5 + 0.5 * sin(t * 0.2 + 2.0);
+				float b = 0.5 + 0.5 * sin(t * 0.2 + 4.0);
+				return vec3(r, g, b);
+			}
+		
 			void main(void) {
-			    vec3 col;
-			    float c;
-			    vec2 tmpv = texCoord * vec2(0.8, 1.0) - vec2(0.95, 1.0);
-			    c = exp(-pow(length(tmpv) * 1.8, 2.0));
-			    col = mix(vec3(0.02, 0.0, 0.03), vec3(0.96, 0.98, 1.0) * 1.5, c);
-			    gl_FragColor = vec4(col * 0.5, 1.0);
+				float time = uTimes.x; // 当前时间 s
+		
+				// 中心坐标偏移
+				vec2 tmpv = texCoord - vec2(0.8, 0.8);
+				tmpv.x *= 1.3; // 拉宽X轴，形成椭圆光晕
+				float c = exp(-pow(length(tmpv) * 2.0, 1.6));
+		
+				// 获取当前帧的颜色
+				vec3 baseColor = colorPalette(time);
+		
+				// 背景颜色从 baseColor 变化到白色光晕
+				vec3 colorA = baseColor * 0.15;     // 暗部（背景）
+				vec3 colorB = baseColor * 1.3;      // 亮部（中心）
+		
+				vec3 col = mix(colorA, colorB, c);
+		
+				gl_FragColor = vec4(col * 0.2, 1.0); // 整体调暗一点
 			}
 		</script>
 		<script id="fx_brightbuf_fsh" type="x-shader/x_fragment">
